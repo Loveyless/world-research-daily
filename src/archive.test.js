@@ -10,9 +10,9 @@ const catalog = Array.from({ length: 45 }, (_, index) => ({
 }))
 
 describe('archive helpers', () => {
-  it('keeps the home archive preview intentionally short', () => {
-    expect(HOME_EPISODE_LIMIT).toBe(5)
-    expect(catalog.slice(0, HOME_EPISODE_LIMIT)).toHaveLength(5)
+  it('shows exactly the three newest courses on the home page', () => {
+    expect(HOME_EPISODE_LIMIT).toBe(3)
+    expect(catalog.slice(0, HOME_EPISODE_LIMIT)).toHaveLength(3)
   })
 
   it('searches title, description, and category without case sensitivity', () => {

@@ -1,4 +1,4 @@
-export const HOME_EPISODE_LIMIT = 5
+export const HOME_EPISODE_LIMIT = 3
 export const HISTORY_PAGE_SIZE = 20
 
 export function filterEpisodes(items, query) {
