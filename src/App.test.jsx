@@ -24,7 +24,7 @@ afterEach(cleanup)
 describe('continuous player behavior', () => {
   it('starts the selected recent course immediately', async () => {
     render(<App />)
-    const recentCourse = screen.getByText('临床试验为什么能接近因果答案？')
+    const recentCourse = screen.getByText('电网为什么必须时刻保持供需平衡？')
     await userEvent.click(recentCourse.closest('button'))
     await waitFor(() => expect(play).toHaveBeenCalledTimes(1))
   })
