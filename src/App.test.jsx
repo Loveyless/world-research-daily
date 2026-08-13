@@ -43,11 +43,27 @@ describe('continuous player behavior', () => {
     global.fetch = vi.fn(() => Promise.resolve({ ok: true, text: () => Promise.resolve('# 示例标题\n\n这是正文。\n\n## 核心结论\n\n结论内容。') }))
     render(<App />)
     const audio = document.querySelector('audio')
+    await userEvent.click(screen.getAllByText('电网为什么必须时刻保持供需平衡？')[0].closest('button'))
+    fireEvent.play(audio)
     await userEvent.click(screen.getByRole('button', { name: '阅读完整文章' }))
     expect(await screen.findByRole('heading', { name: '示例标题' })).toBeTruthy()
     expect(screen.getByText('这是正文。')).toBeTruthy()
     expect(document.querySelector('audio')).toBe(audio)
     expect(location.hash).toContain('#/article/')
+  })
+
+  it('renders one shared bottom dock player after playback starts on every route', async () => {
+    const { container } = render(<App />)
+    expect(container.querySelector('.bottom-player')).toBeNull()
+    const latestCourse = screen.getAllByText('电网为什么必须时刻保持供需平衡？')[0]
+    await userEvent.click(latestCourse.closest('button'))
+    fireEvent.play(document.querySelector('audio'))
+    const player = screen.getByRole('region', { name: '底部播放器' })
+    expect(player.classList.contains('bottom-player')).toBe(true)
+    expect(container.querySelectorAll('.bottom-player')).toHaveLength(1)
+    await userEvent.click(screen.getByRole('button', { name: '历史课程' }))
+    expect(screen.getByRole('region', { name: '底部播放器' })).toBe(player)
+    expect(container.querySelectorAll('.bottom-player')).toHaveLength(1)
   })
 
   it('keeps audio playing while navigating from home to history', async () => {

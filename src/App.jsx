@@ -33,6 +33,7 @@ function getRoute() {
 function App() {
   const [active, setActive] = useState(episodes[0])
   const [playing, setPlaying] = useState(false)
+  const [hasStarted, setHasStarted] = useState(false)
   const [time, setTime] = useState(0)
   const [duration, setDuration] = useState(0)
   const [route, setRoute] = useState(getRoute)
@@ -103,6 +104,7 @@ function App() {
 
   const playEpisode = (episode) => {
     const audio = audioRef.current
+    setHasStarted(true)
     if (episode.slug === active.slug) {
       audio?.play().catch(() => setPlaying(false))
       return
@@ -114,31 +116,36 @@ function App() {
   const toggle = async () => {
     const audio = audioRef.current
     if (!audio) return
-    if (audio.paused) await audio.play()
-    else audio.pause()
+    if (audio.paused) {
+      setHasStarted(true)
+      try { await audio.play() } catch { setPlaying(false) }
+    } else audio.pause()
   }
 
   const seek = (event) => {
     if (audioRef.current) audioRef.current.currentTime = Number(event.target.value)
   }
 
-  const player = (
-    <section className={`player-card ${route === 'history' ? 'compact-player' : ''}`} aria-label="当前播放">
-      <div className="cover" aria-hidden="true"><span className="cover-ring ring-one" /><span className="cover-ring ring-two" /><span className="cover-core">原</span></div>
-      <div className="player-content">
-        <div className="player-meta"><span>当前播放</span><span>{active.date}</span></div>
-        <h2>{active.title}</h2><p>{active.description}</p>
-        <div className="controls">
-          <button className="play" onClick={toggle} aria-label={playing ? '暂停' : '播放'}>{playing ? 'Ⅱ' : '▶'}</button>
-          <div className="timeline"><input type="range" min="0" max={duration || 0} value={time} onChange={seek} aria-label="播放进度" /><div className="time"><span>{formatTime(time)}</span><span>{duration ? formatTime(duration) : active.duration}</span></div></div>
+  const player = hasStarted ? (
+    <section className="bottom-player" aria-label="底部播放器">
+      <div className="bottom-player-inner">
+        <button className="bottom-play" onClick={toggle} aria-label={playing ? '暂停' : '播放'}>{playing ? 'Ⅱ' : '▶'}</button>
+        <button className="bottom-track" onClick={openArticle} aria-label={`阅读：${active.title}`}>
+          <span className="bottom-now">当前播放</span>
+          <strong>{active.title}</strong>
+          <small>{active.category} · {active.date}</small>
+        </button>
+        <div className="bottom-timeline">
+          <input type="range" min="0" max={duration || 0} value={time} onChange={seek} aria-label="播放进度" />
+          <div className="time"><span>{formatTime(time)}</span><span>{duration ? formatTime(duration) : active.duration}</span></div>
         </div>
-        <button className="transcript" onClick={openArticle} aria-label="阅读完整文章">阅读完整文章 <span>→</span></button>
+        <button className="bottom-article" onClick={openArticle} aria-label="阅读完整文章">文章 <span>→</span></button>
       </div>
     </section>
-  )
+  ) : null
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${hasStarted ? 'has-bottom-player' : ''}`}>
       <header className="topbar">
         <button className="brand brand-button" onClick={() => navigate('home')} aria-label="返回首页">
           <span className="brand-mark">原</span><span>世界运行原理</span>
@@ -173,8 +180,6 @@ function App() {
             </div>
           </section>
 
-          {player}
-
           <section className="archive">
             <div className="section-heading"><div><span>RECENT</span><h2>近期课程</h2></div><button className="view-all" onClick={() => navigate('history')}>查看全部 {episodes.length} 期 →</button></div>
             <div className="episode-list">
@@ -184,7 +189,6 @@ function App() {
         </main>
       ) : route === 'history' ? (
         <main className="history-page">
-          {player}
           <section className="history-hero">
             <div className="eyebrow">FULL ARCHIVE</div><h1>历史课程</h1><p>按时间浏览所有课程，或搜索标题、主题与内容简介。</p>
           </section>
@@ -211,7 +215,8 @@ function App() {
         </main>
       )}
 
-      <audio className="persistent-audio" ref={audioRef} preload="metadata" src={`${base}${active.audio}`} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} onEnded={() => setPlaying(false)} />
+      <audio className="persistent-audio" ref={audioRef} preload="metadata" src={`${base}${active.audio}`} onPlay={() => { setHasStarted(true); setPlaying(true) }} onPause={() => setPlaying(false)} onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} onEnded={() => setPlaying(false)} />
+      {player}
       <footer><span>世界运行原理 · 每日一课</span><span>理解，而不只是知道。</span></footer>
     </div>
   )
