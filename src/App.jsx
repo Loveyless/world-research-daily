@@ -32,6 +32,7 @@ function App() {
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
   const audioRef = useRef(null)
+  const pendingAutoplayRef = useRef(false)
 
   useEffect(() => {
     const updateRoute = () => setRoute(location.hash === '#/history' ? 'history' : 'home')
@@ -46,6 +47,10 @@ function App() {
     setTime(0)
     setDuration(0)
     setPlaying(false)
+    if (pendingAutoplayRef.current) {
+      pendingAutoplayRef.current = false
+      audio.play().catch(() => setPlaying(false))
+    }
   }, [active])
 
   const filtered = useMemo(() => filterEpisodes(episodes, query), [query])
@@ -63,10 +68,14 @@ function App() {
     scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const selectEpisode = (episode) => {
+  const playEpisode = (episode) => {
+    const audio = audioRef.current
+    if (episode.slug === active.slug) {
+      audio?.play().catch(() => setPlaying(false))
+      return
+    }
+    pendingAutoplayRef.current = true
     setActive(episode)
-    navigate('home')
-    requestAnimationFrame(() => document.querySelector('.player-card')?.scrollIntoView({ behavior: 'smooth', block: 'center' }))
   }
 
   const toggle = async () => {
@@ -79,6 +88,21 @@ function App() {
   const seek = (event) => {
     if (audioRef.current) audioRef.current.currentTime = Number(event.target.value)
   }
+
+  const player = (
+    <section className={`player-card ${route === 'history' ? 'compact-player' : ''}`} aria-label="当前播放">
+      <div className="cover" aria-hidden="true"><span className="cover-ring ring-one" /><span className="cover-ring ring-two" /><span className="cover-core">原</span></div>
+      <div className="player-content">
+        <div className="player-meta"><span>当前播放</span><span>{active.date}</span></div>
+        <h2>{active.title}</h2><p>{active.description}</p>
+        <div className="controls">
+          <button className="play" onClick={toggle} aria-label={playing ? '暂停' : '播放'}>{playing ? 'Ⅱ' : '▶'}</button>
+          <div className="timeline"><input type="range" min="0" max={duration || 0} value={time} onChange={seek} aria-label="播放进度" /><div className="time"><span>{formatTime(time)}</span><span>{duration ? formatTime(duration) : active.duration}</span></div></div>
+        </div>
+        <a className="transcript" href={`${base}${active.transcript}`} target="_blank" rel="noreferrer">阅读纯文本全文 ↗</a>
+      </div>
+    </section>
+  )
 
   return (
     <div className="app-shell">
@@ -105,7 +129,7 @@ function App() {
             <div className="section-heading latest-heading"><div><span>NEW RELEASES</span><h2>最新三课</h2></div></div>
             <div className="latest-grid">
               {homeSections.featured.map((episode, index) => (
-                <button key={episode.slug} className={`latest-card ${active.slug === episode.slug ? 'active' : ''}`} onClick={() => setActive(episode)}>
+                <button key={episode.slug} className={`latest-card ${active.slug === episode.slug ? 'active' : ''}`} onClick={() => playEpisode(episode)}>
                   <span className="latest-number">0{index + 1}</span>
                   <span className="latest-date">{episode.date}</span>
                   <strong>{episode.title}</strong>
@@ -116,29 +140,18 @@ function App() {
             </div>
           </section>
 
-          <section className="player-card" aria-label="当前播放">
-            <div className="cover" aria-hidden="true"><span className="cover-ring ring-one" /><span className="cover-ring ring-two" /><span className="cover-core">原</span></div>
-            <div className="player-content">
-              <div className="player-meta"><span>当前播放</span><span>{active.date}</span></div>
-              <h2>{active.title}</h2><p>{active.description}</p>
-              <div className="controls">
-                <button className="play" onClick={toggle} aria-label={playing ? '暂停' : '播放'}>{playing ? 'Ⅱ' : '▶'}</button>
-                <div className="timeline"><input type="range" min="0" max={duration || 0} value={time} onChange={seek} aria-label="播放进度" /><div className="time"><span>{formatTime(time)}</span><span>{duration ? formatTime(duration) : active.duration}</span></div></div>
-              </div>
-              <audio ref={audioRef} preload="metadata" src={`${base}${active.audio}`} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} onEnded={() => setPlaying(false)} />
-              <a className="transcript" href={`${base}${active.transcript}`} target="_blank" rel="noreferrer">阅读纯文本全文 ↗</a>
-            </div>
-          </section>
+          {player}
 
           <section className="archive">
             <div className="section-heading"><div><span>RECENT</span><h2>近期课程</h2></div><button className="view-all" onClick={() => navigate('history')}>查看全部 {episodes.length} 期 →</button></div>
             <div className="episode-list">
-              {homeSections.recent.map((episode, index) => <EpisodeRow key={episode.slug} episode={episode} index={index + homeSections.featured.length} total={episodes.length} active={active.slug === episode.slug} onPlay={selectEpisode} />)}
+              {homeSections.recent.map((episode, index) => <EpisodeRow key={episode.slug} episode={episode} index={index + homeSections.featured.length} total={episodes.length} active={active.slug === episode.slug} onPlay={playEpisode} />)}
             </div>
           </section>
         </main>
       ) : (
         <main className="history-page">
+          {player}
           <section className="history-hero">
             <div className="eyebrow">FULL ARCHIVE</div><h1>历史课程</h1><p>按时间浏览所有课程，或搜索标题、主题与内容简介。</p>
           </section>
@@ -148,13 +161,14 @@ function App() {
           </section>
           {archivePage.items.length ? (
             <div className="episode-list history-list">
-              {archivePage.items.map((episode, index) => <EpisodeRow key={episode.slug} episode={episode} index={(archivePage.page - 1) * 20 + index} total={episodes.length} active={active.slug === episode.slug} onPlay={selectEpisode} />)}
+              {archivePage.items.map((episode, index) => <EpisodeRow key={episode.slug} episode={episode} index={(archivePage.page - 1) * 20 + index} total={episodes.length} active={active.slug === episode.slug} onPlay={playEpisode} />)}
             </div>
           ) : <div className="empty-state"><strong>没有找到相关课程</strong><span>换一个关键词试试。</span></div>}
           {archivePage.pageCount > 1 && <nav className="pagination" aria-label="历史课程分页"><button disabled={archivePage.page === 1} onClick={() => setPage((value) => value - 1)}>上一页</button><span>{archivePage.page} / {archivePage.pageCount}</span><button disabled={archivePage.page === archivePage.pageCount} onClick={() => setPage((value) => value + 1)}>下一页</button></nav>}
         </main>
       )}
 
+      <audio className="persistent-audio" ref={audioRef} preload="metadata" src={`${base}${active.audio}`} onPlay={() => setPlaying(true)} onPause={() => setPlaying(false)} onTimeUpdate={(e) => setTime(e.currentTarget.currentTime)} onLoadedMetadata={(e) => setDuration(e.currentTarget.duration)} onEnded={() => setPlaying(false)} />
       <footer><span>世界运行原理 · 每日一课</span><span>理解，而不只是知道。</span></footer>
     </div>
   )
