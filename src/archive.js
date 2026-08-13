@@ -1,5 +1,13 @@
+export const TOP_EPISODE_LIMIT = 3
 export const HOME_EPISODE_LIMIT = 3
 export const HISTORY_PAGE_SIZE = 20
+
+export function getHomeSections(items) {
+  return {
+    featured: items.slice(0, TOP_EPISODE_LIMIT),
+    recent: items.slice(TOP_EPISODE_LIMIT, TOP_EPISODE_LIMIT + HOME_EPISODE_LIMIT),
+  }
+}
 
 export function filterEpisodes(items, query) {
   const keyword = query.trim().toLocaleLowerCase('zh-CN')

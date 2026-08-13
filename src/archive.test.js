@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { filterEpisodes, getEpisodePage, HOME_EPISODE_LIMIT, HISTORY_PAGE_SIZE } from './archive.js'
+import { filterEpisodes, getEpisodePage, getHomeSections, HOME_EPISODE_LIMIT, HISTORY_PAGE_SIZE, TOP_EPISODE_LIMIT } from './archive.js'
 
 const catalog = Array.from({ length: 45 }, (_, index) => ({
   slug: `episode-${index}`,
@@ -10,9 +10,12 @@ const catalog = Array.from({ length: 45 }, (_, index) => ({
 }))
 
 describe('archive helpers', () => {
-  it('shows exactly the three newest courses on the home page', () => {
+  it('shows the three newest courses in the top feature area and the next three below', () => {
+    expect(TOP_EPISODE_LIMIT).toBe(3)
     expect(HOME_EPISODE_LIMIT).toBe(3)
-    expect(catalog.slice(0, HOME_EPISODE_LIMIT)).toHaveLength(3)
+    const sections = getHomeSections(catalog)
+    expect(sections.featured.map((item) => item.slug)).toEqual(['episode-0', 'episode-1', 'episode-2'])
+    expect(sections.recent.map((item) => item.slug)).toEqual(['episode-3', 'episode-4', 'episode-5'])
   })
 
   it('searches title, description, and category without case sensitivity', () => {

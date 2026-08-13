@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { episodes } from './episodes.js'
-import { filterEpisodes, getEpisodePage, HOME_EPISODE_LIMIT } from './archive.js'
+import { filterEpisodes, getEpisodePage, getHomeSections } from './archive.js'
 import './styles.css'
 
 const base = import.meta.env.BASE_URL
@@ -50,6 +50,7 @@ function App() {
 
   const filtered = useMemo(() => filterEpisodes(episodes, query), [query])
   const archivePage = getEpisodePage(filtered, page)
+  const homeSections = getHomeSections(episodes)
 
   useEffect(() => setPage(1), [query])
   useEffect(() => {
@@ -100,10 +101,25 @@ function App() {
             <p>每天聚焦一个问题。不是新闻摘要，不是知识拼盘，而是一段可以真正听懂、长期积累的深度解释。</p>
           </section>
 
+          <section className="latest-section" aria-label="最新三课">
+            <div className="section-heading latest-heading"><div><span>NEW RELEASES</span><h2>最新三课</h2></div></div>
+            <div className="latest-grid">
+              {homeSections.featured.map((episode, index) => (
+                <button key={episode.slug} className={`latest-card ${active.slug === episode.slug ? 'active' : ''}`} onClick={() => setActive(episode)}>
+                  <span className="latest-number">0{index + 1}</span>
+                  <span className="latest-date">{episode.date}</span>
+                  <strong>{episode.title}</strong>
+                  <small>{episode.category} · {episode.duration}</small>
+                  <span className="latest-action">{active.slug === episode.slug ? '正在播放' : '选择播放'} <b>▶</b></span>
+                </button>
+              ))}
+            </div>
+          </section>
+
           <section className="player-card" aria-label="当前播放">
             <div className="cover" aria-hidden="true"><span className="cover-ring ring-one" /><span className="cover-ring ring-two" /><span className="cover-core">原</span></div>
             <div className="player-content">
-              <div className="player-meta"><span>{active.slug === episodes[0].slug ? '最新一课' : '正在收听'}</span><span>{active.date}</span></div>
+              <div className="player-meta"><span>当前播放</span><span>{active.date}</span></div>
               <h2>{active.title}</h2><p>{active.description}</p>
               <div className="controls">
                 <button className="play" onClick={toggle} aria-label={playing ? '暂停' : '播放'}>{playing ? 'Ⅱ' : '▶'}</button>
@@ -117,7 +133,7 @@ function App() {
           <section className="archive">
             <div className="section-heading"><div><span>RECENT</span><h2>近期课程</h2></div><button className="view-all" onClick={() => navigate('history')}>查看全部 {episodes.length} 期 →</button></div>
             <div className="episode-list">
-              {episodes.slice(0, HOME_EPISODE_LIMIT).map((episode, index) => <EpisodeRow key={episode.slug} episode={episode} index={index} total={episodes.length} active={active.slug === episode.slug} onPlay={selectEpisode} />)}
+              {homeSections.recent.map((episode, index) => <EpisodeRow key={episode.slug} episode={episode} index={index + homeSections.featured.length} total={episodes.length} active={active.slug === episode.slug} onPlay={selectEpisode} />)}
             </div>
           </section>
         </main>
