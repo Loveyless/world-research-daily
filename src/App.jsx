@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
+import ReactMarkdown from 'react-markdown'
+import remarkGfm from 'remark-gfm'
 import { episodes } from './episodes.js'
 import { filterEpisodes, getEpisodePage, getHomeSections } from './archive.js'
 import './styles.css'
@@ -23,22 +25,47 @@ function EpisodeRow({ episode, index, total, active, onPlay }) {
   )
 }
 
+function getRoute() {
+  if (location.hash.startsWith('#/article/')) return 'article'
+  return location.hash === '#/history' ? 'history' : 'home'
+}
+
 function App() {
   const [active, setActive] = useState(episodes[0])
   const [playing, setPlaying] = useState(false)
   const [time, setTime] = useState(0)
   const [duration, setDuration] = useState(0)
-  const [route, setRoute] = useState(location.hash === '#/history' ? 'history' : 'home')
+  const [route, setRoute] = useState(getRoute)
   const [query, setQuery] = useState('')
   const [page, setPage] = useState(1)
+  const [article, setArticle] = useState('')
+  const [articleStatus, setArticleStatus] = useState('idle')
   const audioRef = useRef(null)
   const pendingAutoplayRef = useRef(false)
 
   useEffect(() => {
-    const updateRoute = () => setRoute(location.hash === '#/history' ? 'history' : 'home')
+    const updateRoute = () => setRoute(getRoute())
     addEventListener('hashchange', updateRoute)
     return () => removeEventListener('hashchange', updateRoute)
   }, [])
+
+  useEffect(() => {
+    if (route !== 'article') return
+    const slug = location.hash.slice('#/article/'.length)
+    const episode = episodes.find((item) => item.slug === slug) || active
+    if (episode.slug !== active.slug) setActive(episode)
+    setArticleStatus('loading')
+    fetch(`${base}${episode.transcript}`)
+      .then((response) => {
+        if (!response.ok) throw new Error('文章加载失败')
+        return response.text()
+      })
+      .then((text) => {
+        setArticle(text)
+        setArticleStatus('ready')
+      })
+      .catch(() => setArticleStatus('error'))
+  }, [route])
 
   useEffect(() => {
     const audio = audioRef.current
@@ -65,6 +92,12 @@ function App() {
   const navigate = (nextRoute) => {
     location.hash = nextRoute === 'history' ? '#/history' : '#/'
     setRoute(nextRoute)
+    scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const openArticle = () => {
+    location.hash = `#/article/${active.slug}`
+    setRoute('article')
     scrollTo({ top: 0, behavior: 'smooth' })
   }
 
@@ -99,7 +132,7 @@ function App() {
           <button className="play" onClick={toggle} aria-label={playing ? '暂停' : '播放'}>{playing ? 'Ⅱ' : '▶'}</button>
           <div className="timeline"><input type="range" min="0" max={duration || 0} value={time} onChange={seek} aria-label="播放进度" /><div className="time"><span>{formatTime(time)}</span><span>{duration ? formatTime(duration) : active.duration}</span></div></div>
         </div>
-        <a className="transcript" href={`${base}${active.transcript}`} target="_blank" rel="noreferrer">阅读纯文本全文 ↗</a>
+        <button className="transcript" onClick={openArticle} aria-label="阅读完整文章">阅读完整文章 <span>→</span></button>
       </div>
     </section>
   )
@@ -149,7 +182,7 @@ function App() {
             </div>
           </section>
         </main>
-      ) : (
+      ) : route === 'history' ? (
         <main className="history-page">
           {player}
           <section className="history-hero">
@@ -165,6 +198,16 @@ function App() {
             </div>
           ) : <div className="empty-state"><strong>没有找到相关课程</strong><span>换一个关键词试试。</span></div>}
           {archivePage.pageCount > 1 && <nav className="pagination" aria-label="历史课程分页"><button disabled={archivePage.page === 1} onClick={() => setPage((value) => value - 1)}>上一页</button><span>{archivePage.page} / {archivePage.pageCount}</span><button disabled={archivePage.page === archivePage.pageCount} onClick={() => setPage((value) => value + 1)}>下一页</button></nav>}
+        </main>
+      ) : (
+        <main className="article-page">
+          <div className="article-toolbar">
+            <button onClick={() => navigate('home')}>← 返回播放器</button>
+            <span>{active.category} · {active.date} · {active.duration}</span>
+          </div>
+          {articleStatus === 'loading' && <div className="article-state">文章加载中…</div>}
+          {articleStatus === 'error' && <div className="article-state">文章加载失败，请稍后重试。</div>}
+          {articleStatus === 'ready' && <article className="markdown-article"><ReactMarkdown remarkPlugins={[remarkGfm]}>{article}</ReactMarkdown></article>}
         </main>
       )}
 

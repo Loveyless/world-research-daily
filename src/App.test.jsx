@@ -39,6 +39,17 @@ describe('continuous player behavior', () => {
     expect(screen.getByRole('heading', { name: '历史课程' })).toBeTruthy()
   })
 
+  it('opens the transcript as an in-site rendered article and keeps the player mounted', async () => {
+    global.fetch = vi.fn(() => Promise.resolve({ ok: true, text: () => Promise.resolve('# 示例标题\n\n这是正文。\n\n## 核心结论\n\n结论内容。') }))
+    render(<App />)
+    const audio = document.querySelector('audio')
+    await userEvent.click(screen.getByRole('button', { name: '阅读完整文章' }))
+    expect(await screen.findByRole('heading', { name: '示例标题' })).toBeTruthy()
+    expect(screen.getByText('这是正文。')).toBeTruthy()
+    expect(document.querySelector('audio')).toBe(audio)
+    expect(location.hash).toContain('#/article/')
+  })
+
   it('keeps audio playing while navigating from home to history', async () => {
     render(<App />)
     const audio = document.querySelector('audio')

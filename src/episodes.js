@@ -7,7 +7,7 @@ export const episodes = [
     duration: '31:54',
     category: '陌生领域 · 能源系统',
     audio: 'episodes/2026-08-13-grid-supply-demand-balance.mp3',
-    transcript: 'episodes/2026-08-13-grid-supply-demand-balance.txt',
+    transcript: 'episodes/2026-08-13-grid-supply-demand-balance.md',
   },
   {
     slug: '2026-08-12-containerization',
@@ -17,7 +17,7 @@ export const episodes = [
     duration: '33:19',
     category: '陌生领域 · 全球物流',
     audio: 'episodes/2026-08-12-containerization.mp3',
-    transcript: 'episodes/2026-08-12-containerization.txt',
+    transcript: 'episodes/2026-08-12-containerization.md',
   },
   {
     slug: '2026-08-11-circadian-rhythm',
@@ -27,7 +27,7 @@ export const episodes = [
     duration: '40:07',
     category: '人体健康 · 生理节律',
     audio: 'episodes/2026-08-11-circadian-rhythm.mp3',
-    transcript: 'episodes/2026-08-11-circadian-rhythm.txt',
+    transcript: 'episodes/2026-08-11-circadian-rhythm.md',
   },
   {
     slug: '2026-08-10-tcp-congestion-control',
@@ -37,7 +37,7 @@ export const episodes = [
     duration: '37:46',
     category: '程序工程 · 网络协议',
     audio: 'episodes/2026-08-10-tcp-congestion-control.mp3',
-    transcript: 'episodes/2026-08-10-tcp-congestion-control.txt',
+    transcript: 'episodes/2026-08-10-tcp-congestion-control.md',
   },
   {
     slug: '2026-08-09-clinical-trial-causality',
@@ -47,7 +47,7 @@ export const episodes = [
     duration: '41:05',
     category: '医药研发 · 临床试验',
     audio: 'episodes/2026-08-09-clinical-trial-causality.mp3',
-    transcript: 'episodes/2026-08-09-clinical-trial-causality.txt',
+    transcript: 'episodes/2026-08-09-clinical-trial-causality.md',
   },
   {
     slug: '2026-08-08-bank-money-creation',
@@ -57,6 +57,6 @@ export const episodes = [
     duration: '39:16',
     category: '金融基础 · 银行体系',
     audio: 'episodes/2026-08-08-bank-money-creation.mp3',
-    transcript: 'episodes/2026-08-08-bank-money-creation.txt',
+    transcript: 'episodes/2026-08-08-bank-money-creation.md',
   },
 ]
