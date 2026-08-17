@@ -1,5 +1,15 @@
 export const episodes = [
   {
+    slug: '2026-08-17-pharmacokinetic-exposure',
+    date: '2026-08-17',
+    title: '同样一粒药，为什么不同人得到的“体内剂量”可能差很多？',
+    description: '沿着吸收、分布、代谢与排泄追踪一粒药，理解剂量、系统暴露和疗效为何是三个不同层次。',
+    duration: '26:42',
+    category: '医药研发 · 药代动力学',
+    audio: 'episodes/2026-08-17-pharmacokinetic-exposure.mp3',
+    transcript: 'episodes/2026-08-17-pharmacokinetic-exposure.md',
+  },
+  {
     slug: '2026-08-16-investment-allocation',
     date: '2026-08-16',
     title: '投资为什么首先是资产配置，而不是猜下一只赢家？',
